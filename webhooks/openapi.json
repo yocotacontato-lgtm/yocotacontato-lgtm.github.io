@@ -1,0 +1,78 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GuitaPay Webhooks — API de Configuração",
+    "version": "2025-01-01",
+    "description": "API para gerenciar endpoints de webhook de saída, ver logs de entrega e reenviar eventos. Autenticação por sessão de dono (cookie), uso restrito ao painel."
+  },
+  "servers": [{ "url": "/api" }],
+  "paths": {
+    "/webhooks": {
+      "get": { "summary": "Lista endpoints", "responses": { "200": { "description": "OK" } } },
+      "post": {
+        "summary": "Cria um endpoint",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url", "events"],
+                "properties": {
+                  "url": { "type": "string", "format": "uri" },
+                  "description": { "type": "string" },
+                  "events": { "type": "array", "items": { "type": "string" } },
+                  "productIds": { "type": "array", "items": { "type": "string" }, "description": "Vazio/omitido = todos os produtos" },
+                  "enabled": { "type": "boolean", "default": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Criado — o segredo só é devolvido aqui, uma única vez",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" }, "secret": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+    "/webhooks/{id}": {
+      "get": { "summary": "Detalhe de um endpoint + estatísticas de 7 dias", "responses": { "200": { "description": "OK" } } },
+      "patch": { "summary": "Atualiza um endpoint", "responses": { "200": { "description": "OK" } } },
+      "delete": { "summary": "Remove um endpoint (e todo o histórico de entregas)", "responses": { "200": { "description": "OK" } } }
+    },
+    "/webhooks/{id}/test": {
+      "post": { "summary": "Dispara um evento webhook.test e tenta entregar imediatamente", "responses": { "200": { "description": "Entregue" }, "422": { "description": "Falhou (segue na fila de retry)" } } }
+    },
+    "/webhooks/{id}/rotate-secret": {
+      "post": { "summary": "Gera novo segredo (o anterior continua válido por 24h)", "responses": { "200": { "description": "OK — novo segredo devolvido uma única vez" } } }
+    },
+    "/webhooks/{id}/deliveries": {
+      "get": {
+        "summary": "Log de entregas, paginado",
+        "parameters": [
+          { "name": "event_type", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "success", "failed", "dead_letter"] } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/webhooks/{id}/deliveries/{did}": {
+      "get": { "summary": "Detalhe de uma entrega (payload + todas as tentativas)", "responses": { "200": { "description": "OK" } } }
+    },
+    "/webhooks/{id}/deliveries/{did}/retry": {
+      "post": { "summary": "Reenvia uma entrega específica", "responses": { "200": { "description": "OK" } } }
+    },
+    "/webhooks/{id}/deliveries/retry-all-failed": {
+      "post": { "summary": "Reenvia todas as entregas falhadas/dead-letter do endpoint", "responses": { "200": { "description": "OK" } } }
+    },
+    "/webhooks/{id}/stats": {
+      "get": { "summary": "Contagem diária de sucesso/falha dos últimos 7 dias", "responses": { "200": { "description": "OK" } } }
+    },
+    "/events/{event_id}": {
+      "get": { "summary": "Recupera o payload de qualquer evento pelo event_id (permite 'puxar' um evento perdido)", "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } }
+    }
+  }
+}
