@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://guitapay.app/webhooks/schema/order-event.schema.json",
+  "title": "GuitaPay Order Event",
+  "type": "object",
+  "required": [
+    "api_version", "event_id", "event_type", "created_at", "livemode", "test_event",
+    "order", "customer", "items", "tracking_source", "client", "order_bumps", "seller", "metadata"
+  ],
+  "properties": {
+    "api_version": { "type": "string", "const": "2025-01-01" },
+    "event_id": { "type": "string", "description": "Id estável da entrega — use para deduplicar" },
+    "event_type": {
+      "type": "string",
+      "enum": ["order.created", "order.pending", "order.approved", "order.refused", "order.canceled", "cart.abandoned", "webhook.test"]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "livemode": { "type": "boolean" },
+    "test_event": { "type": "boolean" },
+    "order": {
+      "type": "object",
+      "required": ["id", "number", "status", "previous_status", "created_at", "approved_at", "canceled_at", "currency", "amount_gross", "amount_net", "installments", "payment"],
+      "properties": {
+        "id": { "type": "string" },
+        "number": { "type": "string" },
+        "status": { "type": "string" },
+        "previous_status": { "type": ["string", "null"] },
+        "checkout_url": { "type": ["string", "null"] },
+        "success_url": { "type": ["string", "null"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "approved_at": { "type": ["string", "null"], "format": "date-time" },
+        "canceled_at": { "type": ["string", "null"], "format": "date-time" },
+        "currency": { "type": "string" },
+        "amount_gross": { "type": "number" },
+        "amount_net": { "type": "number" },
+        "installments": { "type": "integer" },
+        "payment": {
+          "type": "object",
+          "required": ["method", "transaction_id", "acquirer", "paid_at", "refusal_reason"],
+          "properties": {
+            "method": { "type": ["string", "null"] },
+            "transaction_id": { "type": ["string", "null"] },
+            "acquirer": { "type": ["string", "null"] },
+            "paid_at": { "type": ["string", "null"], "format": "date-time" },
+            "refusal_reason": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "customer": {
+      "type": "object",
+      "required": ["name", "first_name", "last_name", "email", "phone", "phone_alt", "phone_country_code", "phone_national", "language"],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "first_name": { "type": "string" },
+        "last_name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string", "description": "E.164" },
+        "phone_alt": { "type": ["string", "null"] },
+        "phone_country_code": { "type": ["string", "null"] },
+        "phone_national": { "type": ["string", "null"] },
+        "language": { "type": "string" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type", "quantity", "unit_price", "total_price", "is_digital", "delivery_url"],
+        "properties": {
+          "id": { "type": "string" },
+          "product_id": { "type": ["string", "null"] },
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["main", "order_bump"] },
+          "quantity": { "type": "integer" },
+          "unit_price": { "type": "number" },
+          "total_price": { "type": "number" },
+          "is_digital": { "type": "boolean" },
+          "delivery_url": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "tracking": {
+      "type": ["object", "null"],
+      "properties": {
+        "session_id": { "type": ["string", "null"] },
+        "utm_source": { "type": ["string", "null"] },
+        "utm_medium": { "type": ["string", "null"] },
+        "utm_campaign": { "type": ["string", "null"] },
+        "utm_content": { "type": ["string", "null"] },
+        "utm_term": { "type": ["string", "null"] },
+        "sck": { "type": ["string", "null"] },
+        "xcod": { "type": ["string", "null"] },
+        "fbclid": { "type": ["string", "null"] },
+        "fbp": { "type": ["string", "null"] },
+        "fbc": { "type": ["string", "null"] },
+        "gclid": { "type": ["string", "null"] },
+        "ttclid": { "type": ["string", "null"] },
+        "referrer": { "type": ["string", "null"] },
+        "landing_page": { "type": ["string", "null"] },
+        "checkout_started_at": { "type": ["string", "null"], "format": "date-time" },
+        "custom": { "type": "object" }
+      }
+    },
+    "tracking_source": { "type": "string", "enum": ["checkout_url", "recovery", "admin_created", "direct"] },
+    "client": {
+      "type": "object",
+      "required": ["ip", "ip_version", "user_agent", "device_type", "os", "browser", "geo_country_code", "geo_region", "geo_city", "captured_at"],
+      "properties": {
+        "ip": { "type": ["string", "null"] },
+        "ip_version": { "type": ["string", "null"], "enum": ["ipv4", "ipv6", null] },
+        "user_agent": { "type": ["string", "null"] },
+        "device_type": { "type": ["string", "null"] },
+        "os": { "type": ["string", "null"] },
+        "browser": { "type": ["string", "null"] },
+        "geo_country_code": { "type": ["string", "null"] },
+        "geo_region": { "type": ["string", "null"] },
+        "geo_city": { "type": ["string", "null"] },
+        "captured_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "address": {
+      "type": ["object", "null"],
+      "properties": {
+        "country": { "type": ["string", "null"] },
+        "country_code": { "type": ["string", "null"] },
+        "state": { "type": ["string", "null"] },
+        "city": { "type": ["string", "null"] },
+        "source": { "type": ["string", "null"], "enum": ["geoip", "checkout", null] }
+      }
+    },
+    "order_bumps": { "type": "array", "items": { "type": "string" } },
+    "seller": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": { "id": { "type": "string" }, "name": { "type": "string" } }
+    },
+    "metadata": { "type": "object" }
+  }
+}
